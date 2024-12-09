@@ -1,0 +1,150 @@
+#!/bin/sh
+set -e 
+upk_version="0.1"
+# The Unnamed PacKage manager
+# Directories must be a full path (/path/to)
+# Not a relative path (path/to)
+## 
+## Build Commands
+scan() {
+    if ! [ -d "$1/UPK" ]; then
+        echo "Could not find a UPK Directory"
+        return 1
+    fi
+
+    cd "$1/UPK" || { echo "Failed to change directory to UPK"; return 1; }
+    : > "list"
+    cd "$1" || { echo "Failed to change back to the original directory"; return 1; }
+    find . -path ./UPK -prune -o -print >> "$1/UPK/list"
+}
+
+compress() {
+    if ! command -v tar > /dev/null 2>&1; then
+        echo "Could not find tar"
+        return 1
+    fi
+    if ! [ -d "$1" ]; then
+        echo "$1 does not exist"
+        return 1
+    fi
+    if ! [ -d "$1/UPK" ]; then
+        echo "Could not find UPK Directory"
+        return 1
+    fi
+    if ! [ -f "$1/UPK/manifest" ]; then
+        echo "Could not find a UPK Manifest"
+        return 1
+    fi
+    . "$1/UPK/manifest"
+    if ! [ -f "$1/UPK/list" ]; then
+        scan "$1"
+    else
+        echo "Found a list file"
+    fi
+    cd "$1/UPK"
+    tar -cJf "$3/control.tar.xz" *
+    cd "$1"
+    tar --exclude='UPK' -cJf "$3/data.tar.xz" *  
+    touch "$3/upk-version"
+    echo "$upk_version" >> "$3/upk-version"
+    cp "$1/UPK/manifest" "$3"
+    cd "$3"
+    tar -cJf "$pkgname-$pkgver-$pkgarch.upk" *
+    : > "$pkgname-$pkgver-$pkgarch.upk.sha256"
+    sha256sum "$pkgname-$pkgver-$pkgarch.upk" | awk '{print $1}' >> "$pkgname-$pkgver-$pkgarch.upk.sha256"
+    sudo rm -rf "$3/control.tar.xz" "$3/data.tar.xz" "manifest" "upk-version"
+    echo "Built $pkgname-$pkgver-$pkgarch.upk in $3"
+}
+
+genmanifest() {
+    if ! [ -d "$1/UPK" ]; then
+        mkdir -p "$1/UPK"
+    fi 
+    : > "$1/UPK/manifest"
+    cat << EOF > "$1/UPK/manifest"
+# UPK Manifest
+pkgname="mypackage"
+pkgsum="This is an Example Manifest"
+pkgver="1.0"
+pkgarch="any"
+pkgmaintainer="johndoe"
+EOF
+    echo "Successfully Created a manifest for $1"
+}
+## Checksum Commands
+verify() {
+    if ! [ -f "$1" ]; then
+        echo "Could not find $1"
+        return 1
+    fi
+    # $1 is the Package File
+    expected=$(sha256sum "$1" | awk '{print $1}')
+    echo "Expected Sum: $expected"
+    if ! [ -f "$1.sha256" ]; then   
+        echo "Could not find a sha256 file for $1"
+        return 1
+    fi
+    
+    valid=$(cat "$1.sha256")
+    echo "Valid Sum: $valid"
+    if [ "$expected" = "$valid" ]; then
+        echo "The sums match"
+        return 0
+    fi
+}
+case "$1" in
+    build)
+        case "$2" in
+            build)
+                compress "$3" "$4" "$5"
+                ;;
+            scan)
+                scan "$3"
+                ;;
+            help)
+                echo "upk build"
+                echo "Build a UPK Package"
+                echo "upk build scan <workdir>  -   Scan a Package Workdir and Create a UPK/list"
+                echo "upk build build <workdir> <name> <outputdir>  -   Create a UPK Package"
+                echo "upk build manifest <workdir>  -   Generate a Sample Manifest"
+                ;;
+            manifest)
+                genmanifest "$3"
+                ;;
+            *)
+                echo "Usage: upk build <type>"
+                ;;
+        esac
+        ;;
+    help)
+        echo "upk   -   The Unnamed PacKage manager"
+        echo "UPK is licensed with the MIT License"
+        echo "View \"upk license\" for more info"
+        echo "Commands: "
+        echo "upk build <type>  -   Tools for building UPK Packages"
+        echo "upk help  -   This message"
+        echo "upk license   -   View a copy of the MIT License"
+        echo "upk verify    -   Verify a Package Authenticity"
+        echo "UPK Version: $upk_version"
+        ;;
+    license)
+    cat << EOF
+
+
+Copyright 2024 juanvel400
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+EOF
+        ;;
+    verify)
+        verify "$2"
+        ;;
+    *)
+        echo "Usage: upk <command>"
+        ;;
+esac
