@@ -41,5 +41,13 @@ mkdir output
 upk build build "$(pwd)/package" "mypackage" "$(pwd)/output"
 
 ```
+Install that package, test it, and remove it
+```bash
+upk install "$(pwd)/output/mypackage-1.00-any.upk"
+hello
+upk remove "mypackage"
+```
+## License
+UPK Is Licensed with the `MIT/X11` License, view `upk license` or `LICENSE`.
 ## Changelog
 For a changelog, view **CHANGELOG.md**
