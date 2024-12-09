@@ -1,6 +1,6 @@
 
 # upk
-
+![Static Badge](https://img.shields.io/badge/upk_Version-0.2-blue)
 upk is a minimalistic package manager written in Shell Script
 
 
