@@ -1,6 +1,33 @@
 #!/bin/sh
 set -e 
-upk_version="0.1"
+upk_version="0.2"
+## Check for Software
+if ! command -v tar > /dev/null 2>&1; then
+    echo "Could not find tar"
+    exit 1
+fi
+if ! command -v awk > /dev/null 2>&1; then
+    echo "Could not find awk"
+    exit 1
+fi
+if ! command -v xz > /dev/null 2>&1; then
+    echo "Could not find XZ"
+    exit 1
+fi
+if ! command -v sha256sum > /dev/null 2>&1; then
+    echo "Could not find sha256sum"
+    exit 1
+fi
+if ! command -v install > /dev/null 2>&1; then
+    echo "Could not find install"
+    exit 1
+fi
+is_root() {
+    if ! [ "$UID" = "0" ]; then
+        echo "Please run as root"
+        exit 1
+    fi
+}
 # The Unnamed PacKage manager
 # Directories must be a full path (/path/to)
 # Not a relative path (path/to)
@@ -71,6 +98,7 @@ pkgmaintainer="johndoe"
 EOF
     echo "Successfully Created a manifest for $1"
 }
+
 ## Checksum Commands
 verify() {
     if ! [ -f "$1" ]; then
@@ -91,6 +119,29 @@ verify() {
         echo "The sums match"
         return 0
     fi
+}
+query() {
+    if ! [ -f "$1" ]; then
+        echo "Invalid Package File"
+        return 1
+    fi
+    if [ -f "$1.sha256" ]; then
+        verify "$1"
+    fi
+    if ! [ -d "/tmp/upk/extracts" ]; then
+        mkdir -p "/tmp/upk/extracts"
+    fi
+    echo "Please wait while we obtain the package data..."
+    tar -xf "$1" -C "/tmp/upk/extracts"
+    mkdir -p "/tmp/upk/extracts/data"
+    . "/tmp/upk/extracts/manifest"
+    rm -rf "/tmp/upk/"
+    echo "$pkgname"
+    echo "Version: $pkgver"
+    echo "Maintainer: $pkgmaintainer"
+    echo "Summary: $pkgsum"
+    echo "Architecture: $pkgarch"
+    echo "============================="
 }
 case "$1" in
     build)
@@ -117,15 +168,20 @@ case "$1" in
         esac
         ;;
     help)
+        
         echo "upk   -   The Unnamed PacKage manager"
         echo "UPK is licensed with the MIT License"
         echo "View \"upk license\" for more info"
+        echo "Usage: upk <command> <options>"
         echo "Commands: "
-        echo "upk build <type>  -   Tools for building UPK Packages"
-        echo "upk help  -   This message"
-        echo "upk license   -   View a copy of the MIT License"
-        echo "upk verify    -   Verify a Package Authenticity"
+        echo "  upk build <type>  -   Tools for building UPK Packages"
+        echo "  upk help  -   This message"
+        echo "  upk license   -   View a copy of the MIT License"
+        echo "  upk verify    -   Verify a Package Authenticity"
+        echo "  upk query     -   Retrieve Information from a package"
+        echo "View \"upk build help\" for more information on building Packages"
         echo "UPK Version: $upk_version"
+        
         ;;
     license)
     cat << EOF
@@ -143,6 +199,16 @@ EOF
         ;;
     verify)
         verify "$2"
+        ;;
+    version)
+        echo "The Unnamed PacKage manager"
+        echo "                           v$upk_version"
+        echo "                           UPK Is Licensed under the MIT License"
+        echo "                           Please review \"upk license\""
+        echo "                           Copyright (c) juanvel400"
+        ;;
+    query)
+        query "$2"
         ;;
     *)
         echo "Usage: upk <command>"
