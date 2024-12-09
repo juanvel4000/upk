@@ -15,3 +15,4 @@
 - Basic Uninstall Functions
 - Basic Clear Functions
 - Corrected Several Errorrs Relating to those functions
+- Architecture Verification
