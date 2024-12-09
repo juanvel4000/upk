@@ -1,6 +1,11 @@
 #!/bin/sh
 set -e 
 upk_version="0.3"
+if [ -f "/etc/upk/arch" ]; then
+    arch=$(cat "/etc/upk/arch")
+else
+    echo "Could not find /etc/upk/arch"
+fi
 ## Check for Software
 if ! command -v tar > /dev/null 2>&1; then
     echo "Could not find tar"
@@ -195,6 +200,15 @@ install() {
 
     echo "Loading the manifest"
     source "$pkg_info_file"
+    if ! [ "$arch" = "$pkgarch" ]; then
+        echo "Package architecture set at $pkgarch, Cant install"
+        return 1
+    elif [ "$pkgarch" = "any" ]; then
+        echo "Package Architecture set at any, Can install"
+    else
+        echo "Package Architecture set at $pkgarch Cant install"
+
+    fi
     if [ -f "$installroot/etc/upk/pkglist.db" ]; then
         if grep -q "^$pkgname" "$installroot/etc/upk/pkglist.db"; then
             version=$(echo "$line" | awk -F '=>' '{print $2}')
