@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e 
-upk_version="0.2"
+upk_version="0.3"
 ## Check for Software
 if ! command -v tar > /dev/null 2>&1; then
     echo "Could not find tar"
@@ -46,7 +46,9 @@ scan() {
 }
 
 compress() {
-    if ! command -v tar > /dev/null 2>&1; then
+    if ! command -v tar > /dev/null 2>&1; then        if [ -z "$3" ]; then
+            installroot="/"
+        fi
         echo "Could not find tar"
         return 1
     fi
@@ -143,6 +145,147 @@ query() {
     echo "Architecture: $pkgarch"
     echo "============================="
 }
+## Installation Commands
+extract() {
+    # $1: Package File
+    # $2: Install Root (optional)
+    if [ -z "$2" ]; then
+        installroot="/"
+    else
+        installroot="$2"
+    fi
+
+    if ! [ -f "$1" ]; then
+        echo "Could not find $1"
+        return 1
+    fi
+
+    echo "- Extracting $1"
+    mkdir -p "$installroot/tmp/upk/extract"
+    
+    tar -xf "$1" -C "$installroot/tmp/upk/extract" || { echo "Failed to extract $1"; return 1; }
+
+    mkdir -p "$installroot/tmp/upk/extract/info" "$installroot/tmp/upk/extract/root"
+
+    tar -xf "$installroot/tmp/upk/extract/data.tar.xz" -C "$installroot/tmp/upk/extract/root" || { echo "Failed to extract data.tar.xz"; return 1; }
+    tar -xf "$installroot/tmp/upk/extract/control.tar.xz" -C "$installroot/tmp/upk/extract/info" || { echo "Failed to extract control.tar.xz"; return 1; }
+
+    . "$installroot/tmp/upk/extract/manifest"
+    echo "- Found $pkgname"
+
+    echo "Done!"
+    return 0
+}
+
+install() { 
+    # This should be used AFTER Using Extract 
+    # $1: Package Name (optional)
+    # $2: Install Root (optional)
+    if [ -z "$2" ]; then
+        installroot="/"
+    else
+        installroot="$2"
+    fi
+
+    local pkg_info_file="$installroot/tmp/upk/extract/manifest"
+    if [[ ! -f "$pkg_info_file" ]]; then
+        echo "Package info file not found: $pkg_info_file"
+        return 1
+    fi
+
+    echo "Loading the manifest"
+    source "$pkg_info_file"
+    if [ -f "$installroot/etc/upk/pkglist.db" ]; then
+        if grep -q "^$pkgname" "$installroot/etc/upk/pkglist.db"; then
+            version=$(echo "$line" | awk -F '=>' '{print $2}')
+            if [ "$version" > "$pkgver" ]; then
+                echo "Installed Package has an Higher version ($version) than Package version ($pkgver)"
+                return 1
+            else
+                echo "Updating package ($version -> $pkgver)"
+            fi
+        fi
+    fi
+    echo "Creating an Index File"
+    mkdir -p "$installroot/etc/upk/index"
+
+    cp "$installroot/tmp/upk/extract/info/list" "$installroot/etc/upk/index/$pkgname.index"
+    echo "Copying files..."
+
+    while IFS= read -r path; do
+        path="${path#./}"
+        if [ -d "$installroot/tmp/upk/extract/root/$path" ]; then
+            mkdir -p "$installroot/$path"
+        elif [ -f "$installroot/tmp/upk/extract/root/$path" ]; then
+            echo "Copying $installroot/tmp/upk/extract/root/$path to $installroot/$path"
+            cp -p "$installroot/tmp/upk/extract/root/$path" "$installroot/$path"
+        else
+            echo "Not found: $path"
+        fi
+    done < "$installroot/etc/upk/index/$pkgname.index"
+
+    echo "Adding $pkgname to the package list"
+    if ! [ -f "$installroot/etc/upk/pkglist.db" ]; then
+        : > "$installroot/etc/upk/pkglist.db"
+    fi
+
+    echo "$pkgname=>$pkgver" >> "$installroot/etc/upk/pkglist.db"
+    echo "Cleaning up tmp"
+    rm -r "$installroot/tmp/upk/extract"
+
+    echo "Done!"
+    return 0
+}
+clean() {
+    rm -r "/tmp/upk"
+}
+uninstall() {
+    # Validate input parameters
+    if [ -z "$1" ]; then
+        echo "Error: Package name is required."
+        return 1
+    fi
+
+    # Set the install root directory
+    installroot="${2:-/tmp/upk/installroot}"
+
+    # Create the install root directory if it doesn't exist
+    if ! [ -d "$installroot" ]; then
+        mkdir -p "$installroot" || { echo "Failed to create install root directory."; return 1; }
+    fi
+
+    # Check if the package exists in the package list
+    if ! grep -q "^$1" "$installroot/etc/upk/pkglist.db"; then
+        echo "Package not found: $1"
+        return 1
+    fi
+
+    pkgname="$1"
+    echo "Removing Package $pkgname"
+
+    # Read the package index and remove files/directories
+    while IFS= read -r path; do
+        path="${path#./}"  # Remove leading './' if present
+        fullpath="$installroot/$path"  # Construct the full path
+
+        if [ -d "$fullpath" ]; then
+            echo "Skipping Folder: $path"
+        elif [ -f "$fullpath" ]; then
+            rm -r "$fullpath" && echo "Removed: $path" || echo "Failed to remove: $path"
+        else
+            echo "Not found: $fullpath"
+        fi
+    done < "$installroot/etc/upk/index/$pkgname.index"
+
+    # Remove the package from the local package database
+    echo "Removing $pkgname from Local Package Database"
+    awk -v pkg="$pkgname" '!/^'"$pkgname"'=/' "$installroot/etc/upk/pkglist.db" > temp.txt && mv temp.txt "$installroot/etc/upk/pkglist.db" || {
+        echo "Failed to update package list."
+        return 1
+    }
+
+    echo "Package $pkgname has been successfully removed."
+}
 case "$1" in
     build)
         case "$2" in
@@ -179,6 +322,11 @@ case "$1" in
         echo "  upk license   -   View a copy of the MIT License"
         echo "  upk verify    -   Verify a Package Authenticity"
         echo "  upk query     -   Retrieve Information from a package"
+        echo "  upk extract <package>   -   Extract a package"
+        echo "  upk add     -   Install the package that is stored, use after extract."
+        echo "  upk install -   Extract and Install a Package"
+        echo "  upk remove  -   Remove a package"
+        echo "  upk clean   -   Clean the /tmp/upk Directory"
         echo "View \"upk build help\" for more information on building Packages"
         echo "UPK Version: $upk_version"
         
@@ -202,13 +350,41 @@ EOF
         ;;
     version)
         echo "The Unnamed PacKage manager"
-        echo "                           v$upk_version"
+        echo "                           v$upk_version"       
         echo "                           UPK Is Licensed under the MIT License"
         echo "                           Please review \"upk license\""
         echo "                           Copyright (c) juanvel400"
         ;;
+    extract)
+        is_root
+        if [ -z "$3" ]; then
+            installroot="/"
+        fi
+        extract "$2"
+        ;;
+    install)
+        is_root
+        if [ -z "$3" ]; then
+            installroot="/"
+        fi
+        extract "$2"
+        install "$2" "/"
+        ;;
+    add)
+        is_root
+        install "$2" "$3"
+        ;;
     query)
         query "$2"
+        ;;
+    remove)
+        if [ -z "$3" ]; then
+            installroot="/"
+        fi
+        uninstall "$2" "$installroot"
+        ;;
+    clear)
+        clean
         ;;
     *)
         echo "Usage: upk <command>"

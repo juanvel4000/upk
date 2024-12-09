@@ -41,4 +41,5 @@ mkdir output
 upk build build "$(pwd)/package" "mypackage" "$(pwd)/output"
 
 ```
-
+## Changelog
+For a changelog, view **CHANGELOG.md**
