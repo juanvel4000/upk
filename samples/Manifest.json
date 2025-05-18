@@ -1,0 +1,18 @@
+{
+    "name": "example",
+    "version": "1.0",
+    "binary": true,
+    "summary": "Example upk package manifest",
+    "author": {
+        "name": "juanvel400",
+        "mail": "juanvel400@juanvel400.xyz"
+    },
+    "link": "https://example.com/example",
+    "scripts": {
+        "build": "build.sh",
+        "comment": "Build is only used if binary is false, required if binary is false",
+        "preinstall": "preinst.sh",
+        "postinstall": "postinst.sh",
+        "comment2": "Those two are optional"
+    }
+}
