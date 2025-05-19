@@ -1,3 +1,2 @@
-import manifest
-import package
-
+from . import manifest
+from . import package
