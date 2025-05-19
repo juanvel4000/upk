@@ -16,13 +16,10 @@
     "link": "https://example.com/example",
     "scripts": {
         "build": "build.sh",
-        "comment": "Build is only used if binary is false, required if binary is false",
         "preinstall": "preinst.sh",
-        "postinstall": "postinst.sh",
-        "comment2": "Those two are optional"
+        "postinstall": "postinst.sh"
     },
     "entrances": {
-        "command": "/bin/command",
-        "comment": "the cdir is the package storage (~/.upk/packages/example)"
+        "command": "/bin/command"
     }
 }

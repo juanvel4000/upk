@@ -1,0 +1,16 @@
+{
+    "name": "example",
+    "version": "1.0",
+    "binary": true,
+    "summary": "Example upk package manifest",
+    "arch": "x86_64",
+    "platform": "linux",
+    "author": {
+        "name": "juanvel400",
+        "mail": "juanvel400@juanvel400.xyz"
+    },
+    "link": "https://example.com/example",
+    "entrances": {
+        "command": "/bin/command"
+    }
+}

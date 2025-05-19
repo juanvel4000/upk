@@ -1,5 +1,5 @@
 import json
-def read(f):
+def read(f, file=True):
     with open(f, 'r') as manifest:
         m = json.load(manifest)
         for attr in ["name", "author", "version", "binary", "summary", "arch", "platform"]:
