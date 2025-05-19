@@ -6,11 +6,14 @@ maindir = os.path.join(home, '.upk')
 execdir = os.path.join(maindir, 'bin')
 database = os.path.join(maindir, 'UPK.db')
 packagesdir = os.path.join(maindir, 'packages')
-
+repolist = os.path.join(maindir, 'repos')
 cachedir = os.path.join(maindir, 'cache')
 extractdir = os.path.join(cachedir, 'extract')
 repocache = os.path.join(cachedir, 'repos')
 lock = os.path.join(maindir, 'UPK.lock')
+if not os.path.isfile(repolist):
+    with open(repolist, 'w') as re:
+        re.write()
 for i in [maindir, execdir, cachedir, extractdir, repocache, packagesdir]:
     os.makedirs(i, exist_ok=True)
 if os.getenv('PATH'):

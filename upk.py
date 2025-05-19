@@ -1,5 +1,6 @@
 import modules
 import sys
+import requests
 def _help():
     print("upk: unnamed package manager")
     print("upk is a user-wide package manager designed to manage upk packages (obviously)")
@@ -8,6 +9,7 @@ def _help():
     print("remove <package>         -   Uninstall an upk package")
     print("build <workdir> [name]   -   Build an upk package")
     print("help                     -   Show this message")
+
 def _main():
     argv = sys.argv[1:]
     argc = len(argv)
@@ -46,10 +48,7 @@ def _main():
                 print("usage: upk build <workdir> [package]")
                 sys.exit(1)
             try:
-                if argc == 2:
-                    name = None
-                else:
-                    name = argv[1]
+                name = argv[2] if argc >= 3 else None
                 modules.variables.waitLock()
                 m = modules.package.compressPkg(workdir, name)
             except Exception as e:
@@ -59,6 +58,14 @@ def _main():
         case 'help':
             _help()
             sys.exit(1)
+        case 'clear':
+            ca = modules.variables.clearCache()
+            if not ca:
+                print("error cleaning the cache")            
+                sys.exit(1)
+            else:
+                print(" cache cleaned")
+                sys.exit(1)
         case _:
             print("unknown command: " + argv[0])
             _help()
