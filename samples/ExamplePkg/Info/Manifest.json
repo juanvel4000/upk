@@ -1,0 +1,16 @@
+{
+    "name": "hello",
+    "version": "1.0",
+    "binary": true,
+    "summary": "Hello, World!",
+    "arch": "x86_64",
+    "platform": "linux",
+    "author": {
+        "name": "juanvel400",
+        "mail": "juanvel400@juanvel400.xyz"
+    },
+    "link": "https://example.com/example",
+    "endpoints": {
+        "hello": "bin/hello"
+    }
+}

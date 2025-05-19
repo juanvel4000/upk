@@ -50,7 +50,7 @@ def _main():
             try:
                 name = argv[2] if argc >= 3 else None
                 modules.variables.waitLock()
-                m = modules.package.compressPkg(workdir, name)
+                m = modules.package.compressPkg(argv[1], name)
             except Exception as e:
                 print(f"error: {e}")
             finally:

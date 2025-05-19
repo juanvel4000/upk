@@ -11,10 +11,8 @@ cachedir = os.path.join(maindir, 'cache')
 extractdir = os.path.join(cachedir, 'extract')
 repocache = os.path.join(cachedir, 'repos')
 lock = os.path.join(maindir, 'UPK.lock')
-if not os.path.isfile(repolist):
-    with open(repolist, 'w') as re:
-        re.write()
-for i in [maindir, execdir, cachedir, extractdir, repocache, packagesdir]:
+dldir = os.path.join(cachedir, 'downloads')
+for i in [maindir, execdir, cachedir, extractdir, repocache, packagesdir, dldir]:
     os.makedirs(i, exist_ok=True)
 if os.getenv('PATH'):
     path = os.getenv('PATH')
@@ -23,7 +21,9 @@ if os.getenv('PATH'):
         print("! warning")
         print(f"! upk is not in path, please add `export PATH=$PATH:{execdir}`")
         print("! to your .zshrc or .bashrc or your shell's configuration")
-    
+if not os.path.isfile(repolist):
+    with open(repolist, 'w') as re:
+        re.write('')
 def setLock():
     global lock
     with open(lock, 'w') as l:
@@ -46,11 +46,10 @@ def waitLock():
 
 def clearCache():
     shutil.rmtree(cachedir)
-    for i in [cachedir, extractdir, repocache]:
+    for i in [cachedir, extractdir, repocache, dldir]:
         os.makedirs(i, exist_ok=True)
-
+    return True
 def clearextractCache():
-    shutil.rmtree(extractdir)
-    for i in [extractdir]:
-        os.makedirs(i, exist_ok=True)
-        
+    if os.path.exists(extractdir):
+        shutil.rmtree(extractdir)
+    os.makedirs(extractdir, exist_ok=True)
