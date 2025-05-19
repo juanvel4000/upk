@@ -11,7 +11,8 @@ class Database:
             CREATE TABLE IF NOT EXISTS packages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
-                version TEXT NOT NULL
+                version TEXT NOT NULL,
+                manifest TEXT NOT NULL
             )
         """)
         self.conn.commit()
@@ -26,10 +27,10 @@ class Database:
         return row[0] if row else None
     def insertPackage(self, name, version, manifest):
         self.cur.execute("INSERT INTO packages (name, version, manifest) VALUES (?, ?, ?)", (name, version, manifest))
-        self.db.commit()
+        self.conn.commit()
     def deletePackage(self, name):
         self.cur.execute("DELETE FROM packages WHERE name = ?", (name,))
-        self.db.commit()
+        self.conn.commit()
     def getPackageManifest(self, package):
         self.cur.execute("SELECT manifest FROM packages WHERE name = ?", (package,))
         row = self.cur.fetchone()

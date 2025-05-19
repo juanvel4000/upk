@@ -1,5 +1,6 @@
 import os
 import time
+import shutil
 home = os.path.expanduser('~')
 maindir = os.path.join(home, '.upk')
 execdir = os.path.join(maindir, 'bin')
@@ -41,12 +42,12 @@ def waitLock():
     return True
 
 def clearCache():
-    os.removedirs(cachedir)
+    shutil.rmtree(cachedir)
     for i in [cachedir, extractdir, repocache]:
         os.makedirs(i, exist_ok=True)
 
 def clearextractCache():
-    os.removedirs(extractdir)
+    shutil.rmtree(extractdir)
     for i in [extractdir]:
         os.makedirs(i, exist_ok=True)
         

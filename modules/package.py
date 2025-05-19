@@ -8,6 +8,7 @@ def compress(src, output):
 def extract(src, output="."):
     with tarfile.open(src, "r:xz") as tar:
         tar.extractall(path=output)
+    return True
 
 def compressPkg(workdir=".", output=None):
     if os.path.isdir(workdir):

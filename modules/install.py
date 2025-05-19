@@ -8,12 +8,12 @@ import os
 import json
 def installPkg(f):
     if not package.extract(f, variables.extractdir):
-        return False
+        return "could not extract package"
     Manifest = manifest.read(os.path.join(variables.extractdir, 'Info', 'Manifest.json'))
     db = database.Database()
     if db.isPackageInstalled(Manifest['name']):
         variables.clearextractCache()
-        return False
+        return "package is already installed"
     Filesdir = os.path.join(variables.extractdir, 'Source')
     dopost = False
     if 'scripts' in Manifest:
@@ -59,7 +59,7 @@ def installPkg(f):
 def removePkg(name):
     db = database.Database()
     if not db.isPackageInstalled(name):
-        return False
+        return "package is not installed"
     shutil.rmtree(os.path.join(variables.packagesdir, name))
     Manifest = json.loads(db.getPackageManifest(name))
     if 'endpoints' in Manifest:
@@ -68,6 +68,6 @@ def removePkg(name):
             path = os.path.join(variables.execdir, i)
             if os.path.exists(path) or os.path.islink(path):
                 os.remove(path)
-
+    
     db.deletePackage(name)
     return True
