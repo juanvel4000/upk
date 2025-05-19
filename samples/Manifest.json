@@ -3,6 +3,12 @@
     "version": "1.0",
     "binary": true,
     "summary": "Example upk package manifest",
+    "arch": "x86_64",
+    "platform": "linux",
+    "depends": [
+        "libfoo",
+        "libbar"
+    ],
     "author": {
         "name": "juanvel400",
         "mail": "juanvel400@juanvel400.xyz"
@@ -14,5 +20,9 @@
         "preinstall": "preinst.sh",
         "postinstall": "postinst.sh",
         "comment2": "Those two are optional"
+    },
+    "entrances": {
+        "command": "/bin/command",
+        "comment": "the cdir is the package storage (~/.upk/packages/example)"
     }
 }

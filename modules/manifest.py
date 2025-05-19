@@ -2,7 +2,7 @@ import json
 def read(f):
     with open(f, 'r') as manifest:
         m = json.load(manifest)
-        for attr in ["name", "author", "version", "binary", "summary"]:
+        for attr in ["name", "author", "version", "binary", "summary", "arch", "platform"]:
             if attr not in m:
                 raise SyntaxError(f"Missing key {attr} in {f}")
             if attr == "author":

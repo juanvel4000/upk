@@ -1,0 +1,9 @@
+{
+    "name": "example",
+    "versions": { 
+        "1.0": "https://example.com/example-1.0.upk",
+        "default": "1.0"
+    },
+    "arch": "x86_64",
+    "platform": "linux"
+}
