@@ -25,7 +25,9 @@ class Database:
         self.cur.execute("SELECT version FROM packages WHERE name = ?", (package,))
         row = self.cur.fetchone()
         return row[0] if row else None
-    def insertPackage(self, name, version, manifest):
+    def insertPackage(self, name, version, manifest, pkgstr=None):
+        if pkgstr == None:
+            pkgstr = f"local/{name}:{version}"
         self.cur.execute("INSERT INTO packages (name, version, manifest) VALUES (?, ?, ?)", (name, version, manifest))
         self.conn.commit()
     def deletePackage(self, name):

@@ -1,0 +1,5 @@
+{
+    "repositories": {
+        "example": "https://example.com/repository"
+    }
+}

@@ -4,6 +4,11 @@
         "1.0": "https://example.com/example-1.0.upk",
         "default": "1.0"
     },
+    "dependencies": {
+        "1.0": [
+            "main/libfoo"
+        ]
+    },
     "arch": "x86_64",
     "platform": "linux"
 }

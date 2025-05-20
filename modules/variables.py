@@ -23,7 +23,7 @@ if os.getenv('PATH'):
         print("! to your .zshrc or .bashrc or your shell's configuration")
 if not os.path.isfile(repolist):
     with open(repolist, 'w') as re:
-        re.write('')
+        re.write('{"repositories": {"main": "https://upk.juanvel400.xyz"}}')
 def setLock():
     global lock
     with open(lock, 'w') as l:

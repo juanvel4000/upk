@@ -1,2 +1,4 @@
 __pycache__/
 venv/
+upk-pkg/
+*.upk

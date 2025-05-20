@@ -19,7 +19,7 @@
         "preinstall": "preinst.sh",
         "postinstall": "postinst.sh"
     },
-    "entrances": {
+    "endpoints": {
         "command": "/bin/command"
     }
 }
